@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\PlageHoraireRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -26,8 +28,18 @@ class PlageHoraire
     #[ORM\Column]
     private ?int $numJour = null;
 
-    #[ORM\Column]
-    private ?int $idEtat = null;
+    #[ORM\ManyToMany(targetEntity: PlanningType::class, mappedBy: 'plagesHoraires')]
+    private Collection $planningTypes;
+
+    #[ORM\ManyToMany(targetEntity: Etat::class, inversedBy: 'plageHoraires')]
+    private Collection $etats;
+
+    public function __construct()
+    {
+        $this->planningTypes = new ArrayCollection();
+        $this->etats = new ArrayCollection();
+    }
+
 
     public function getId(): ?int
     {
@@ -82,15 +94,55 @@ class PlageHoraire
         return $this;
     }
 
-    public function getIdEtat(): ?int
+    /**
+     * @return Collection<int, PlanningType>
+     */
+    public function getPlanningTypes(): Collection
     {
-        return $this->idEtat;
+        return $this->planningTypes;
     }
 
-    public function setIdEtat(int $idEtat): self
+    public function addPlanningType(PlanningType $planningType): self
     {
-        $this->idEtat = $idEtat;
+        if (!$this->planningTypes->contains($planningType)) {
+            $this->planningTypes->add($planningType);
+            $planningType->addPlagesHoraire($this);
+        }
 
         return $this;
     }
+
+    public function removePlanningType(PlanningType $planningType): self
+    {
+        if ($this->planningTypes->removeElement($planningType)) {
+            $planningType->removePlagesHoraire($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Etat>
+     */
+    public function getEtats(): Collection
+    {
+        return $this->etats;
+    }
+
+    public function addEtat(Etat $etat): self
+    {
+        if (!$this->etats->contains($etat)) {
+            $this->etats->add($etat);
+        }
+
+        return $this;
+    }
+
+    public function removeEtat(Etat $etat): self
+    {
+        $this->etats->removeElement($etat);
+
+        return $this;
+    }
+
 }
